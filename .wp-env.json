@@ -1,0 +1,15 @@
+{
+  "core": null,
+  "mappings": {
+    "wp-content/plugins/dg-interview": "./src/plugin-src",
+    "wp-content/themes/dg-interview-theme": "./src/theme-src"
+  },
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true,
+    "WP_DEBUG_DISPLAY": false,
+    "DG_VITE_DEV": true
+  },
+  "port": 9010,
+  "testsPort": 9011
+}

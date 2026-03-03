@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<ruleset name="DG-Interview">
+    <description>WordPress Coding Standards for DG Interview</description>
+
+    <file>./src/plugin-src</file>
+
+    <arg name="extensions" value="php"/>
+
+    <exclude-pattern>/src/plugin-src/vendor/*</exclude-pattern>
+    <exclude-pattern>/src/plugin-src/build/*</exclude-pattern>
+
+    <arg value="-colors"/>
+    <arg value="ns"/>
+
+    <rule ref="WordPress">
+        <exclude name="Squiz.Commenting.InlineComment.InvalidEndChar" />
+    </rule>
+
+    <rule ref="WordPress-Core"/>
+
+    <rule ref="WordPress-Extra">
+        <exclude name="WordPress.Files.FileName"/>
+        <exclude name="WordPress.NamingConventions.ValidVariableName"/>
+    </rule>
+
+    <rule ref="WordPress-Docs"/>
+
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+
+    <!-- Exclude function comment requirement for test files -->
+    <rule ref="Squiz.Commenting.FunctionComment.Missing">
+        <exclude-pattern>*.test.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Commenting.VariableComment.Missing">
+        <exclude-pattern>*.test.php</exclude-pattern>
+    </rule>
+
+    <config name="minimum_supported_wp_version" value="5.9"/>
+</ruleset>

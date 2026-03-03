@@ -1,0 +1,130 @@
+name: CI
+
+on:
+    push:
+        branches: ['**']
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    setup:
+        name: Setup
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2'
+                  extensions: mbstring, xml
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Get Composer cache directory
+              id: composer-cache
+              run: echo "dir=$(cd src/plugin-src && composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            - uses: actions/cache@v4
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: ${{ runner.os }}-composer-
+
+            - name: Install dependencies
+              run: |
+                  bun install --frozen-lockfile
+                  composer install --prefer-dist --no-progress --no-interaction
+                  cd src/plugin-src && composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Build block editor
+              run: bun run build:editor
+
+            - uses: actions/cache@v4
+              with:
+                  path: .
+                  key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+    static:
+        needs: setup
+        name: Static Analysis
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/cache@v4
+              with:
+                  path: .
+                  key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - name: phpcs
+              run: bun run phpcs
+
+            - name: phpstan
+              run: bun run phpstan
+
+    js:
+        needs: setup
+        name: JS / TS Tests
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/cache@v4
+              with:
+                  path: .
+                  key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - name: eslint
+              run: bun run eslint
+
+            - name: vitest
+              run: bun run vitest
+
+            - name: tsc
+              run: bun run tsc
+
+    phpunit:
+        needs: setup
+        name: PHPUnit
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/cache@v4
+              with:
+                  path: .
+                  key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - name: Start wp-env
+              run: |
+                  bun run wp-env start || true
+                  sleep 10
+                  if bun run wp-env run cli -- wp db check; then
+                    echo "wp-env is ready"
+                  else
+                    echo "Retrying wp-env start..."
+                    bun run wp-env stop || true
+                    sleep 5
+                    bun run wp-env start
+                    sleep 10
+                  fi
+
+            - name: PHPUnit
+              run: bun run phpunit
+
+            - name: Stop wp-env
+              if: always()
+              run: bun run wp-env stop

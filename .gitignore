@@ -1,0 +1,11 @@
+node_modules/
+vendor/
+.wp-env/
+dist/
+src/plugin-src/build/
+src/plugin-src/builder-dist/
+*.log
+.phpunit.result.cache
+EVALUATION.md
+CLAUDE.md
+.dg-interview.enable-hooks
